@@ -26,9 +26,7 @@ export default function InstitutionCheck() {
   return (
     <section className="panel">
       <div className="panel-header">
-        <p className="eyebrow">Institution</p>
-        <h2>Verification Lookup</h2>
-        <p className="muted">Check whether a wallet address has already been verified on-chain.</p>
+        <h2>Check wallet</h2>
       </div>
 
       <form className="form-stack" onSubmit={handleCheck}>

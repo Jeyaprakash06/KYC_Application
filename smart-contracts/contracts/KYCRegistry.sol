@@ -31,6 +31,7 @@ contract KYCRegistry is AccessControl {
     }
 
     mapping(address => KYCRecord) private records;
+    mapping(address => KYCRecord[]) private recordHistory;
     mapping(address => uint256) private verifierIndexPlusOne;
 
     address[] private applicants;
@@ -75,12 +76,14 @@ contract KYCRegistry is AccessControl {
         require(bytes(residentialAddress).length > 0, "Residential address is required");
         require(bytes(documentType).length > 0, "Document type is required");
         require(bytes(ipfsCID).length > 0, "IPFS CID is required");
+        require(!hasRole(VERIFIER_ROLE, msg.sender), "Verifiers cannot submit applications");
 
         KYCRecord storage record = records[msg.sender];
 
+        totalSubmissions += 1;
+
         if (!record.exists) {
             applicants.push(msg.sender);
-            totalSubmissions += 1;
         } else {
             _decrementStatusCount(record.status);
         }
@@ -103,6 +106,7 @@ contract KYCRegistry is AccessControl {
         pendingCount += 1;
 
         emit KYCSubmitted(msg.sender, ipfsCID, record.statusHash);
+        _syncHistoryEntry(msg.sender, record);
     }
 
     function verifyUser(address user, string calldata reviewerNote) external onlyRole(VERIFIER_ROLE) {
@@ -120,6 +124,7 @@ contract KYCRegistry is AccessControl {
         verifiedCount += 1;
 
         emit KYCVerified(user, msg.sender, record.statusHash);
+        _syncHistoryEntry(user, record);
     }
 
     function rejectUser(
@@ -143,6 +148,7 @@ contract KYCRegistry is AccessControl {
         rejectedCount += 1;
 
         emit KYCRejected(user, msg.sender, reason, record.statusHash);
+        _syncHistoryEntry(user, record);
     }
 
     function checkStatus(address user) external view returns (Status) {
@@ -166,6 +172,19 @@ contract KYCRegistry is AccessControl {
     {
         require(records[user].exists, "Record does not exist");
         return records[user];
+    }
+
+    function getMyRecordHistory() external view returns (KYCRecord[] memory) {
+        return recordHistory[msg.sender];
+    }
+
+    function getRecordHistory(address user)
+        external
+        view
+        onlyRole(VERIFIER_ROLE)
+        returns (KYCRecord[] memory)
+    {
+        return recordHistory[user];
     }
 
     function getPendingApplicants() external view onlyRole(VERIFIER_ROLE) returns (address[] memory) {
@@ -285,6 +304,30 @@ contract KYCRegistry is AccessControl {
         } else if (status == Status.Rejected && rejectedCount > 0) {
             rejectedCount -= 1;
         }
+    }
+
+    function _syncHistoryEntry(address user, KYCRecord storage record) internal {
+        KYCRecord[] storage history = recordHistory[user];
+
+        if (history.length == 0 || history[history.length - 1].submittedAt != record.submittedAt) {
+            history.push();
+        }
+
+        KYCRecord storage snapshot = history[history.length - 1];
+        snapshot.fullName = record.fullName;
+        snapshot.email = record.email;
+        snapshot.dateOfBirth = record.dateOfBirth;
+        snapshot.residentialAddress = record.residentialAddress;
+        snapshot.documentType = record.documentType;
+        snapshot.ipfsCID = record.ipfsCID;
+        snapshot.rejectionReason = record.rejectionReason;
+        snapshot.reviewerNote = record.reviewerNote;
+        snapshot.submittedAt = record.submittedAt;
+        snapshot.reviewedAt = record.reviewedAt;
+        snapshot.statusHash = record.statusHash;
+        snapshot.status = record.status;
+        snapshot.reviewer = record.reviewer;
+        snapshot.exists = record.exists;
     }
 
     function _computeStatusHash(

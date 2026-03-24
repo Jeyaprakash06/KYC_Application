@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { submitKYC, uploadDocument } from "../utils/blockchain";
+import { getExplorerTxUrl, submitKYC, uploadDocument } from "../utils/blockchain";
 
 const INITIAL_FORM = {
   fullName: "",
@@ -10,10 +10,11 @@ const INITIAL_FORM = {
   file: null
 };
 
-export default function SubmitKYC({ wallet, onSubmitted }) {
+export default function SubmitKYC({ wallet, isVerifier, onSubmitted }) {
   const [form, setForm] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [txInfo, setTxInfo] = useState(null);
   const [error, setError] = useState("");
 
   function updateField(event) {
@@ -27,10 +28,16 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
+    setTxInfo(null);
     setError("");
 
     if (!wallet) {
       setError("Connect MetaMask before submitting KYC.");
+      return;
+    }
+
+    if (isVerifier) {
+      setError("Verifier wallets cannot submit KYC applications.");
       return;
     }
 
@@ -50,7 +57,7 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
         wallet
       });
 
-      await submitKYC({
+      const tx = await submitKYC({
         fullName: form.fullName,
         email: form.email,
         dateOfBirth: form.dateOfBirth,
@@ -59,7 +66,12 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
         ipfsCID: cid
       });
 
-      setMessage(`Application submitted successfully. IPFS CID: ${cid}`);
+      setMessage("Saved on-chain.");
+      setTxInfo({
+        ...tx,
+        explorerUrl: getExplorerTxUrl(tx.hash),
+        cid
+      });
       setForm(INITIAL_FORM);
       onSubmitted();
     } catch (err) {
@@ -72,25 +84,43 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
   return (
     <section className="panel">
       <div className="panel-header">
-        <p className="eyebrow">Applicant</p>
-        <h2>Submit KYC</h2>
-        <p className="muted">Create or resubmit your KYC application with your latest documents.</p>
+        <h2>Submit</h2>
       </div>
+
+      {isVerifier ? (
+        <div className="banner error">
+          This wallet is registered as a verifier, so the applicant submission form is locked.
+        </div>
+      ) : null}
 
       <form className="form-stack" onSubmit={handleSubmit}>
         <label>
           <span>Full name</span>
-          <input name="fullName" value={form.fullName} onChange={updateField} required />
+          <input name="fullName" value={form.fullName} onChange={updateField} required disabled={isVerifier} />
         </label>
 
         <label>
           <span>Email</span>
-          <input name="email" type="email" value={form.email} onChange={updateField} required />
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={updateField}
+            required
+            disabled={isVerifier}
+          />
         </label>
 
         <label>
           <span>Date of birth</span>
-          <input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={updateField} required />
+          <input
+            name="dateOfBirth"
+            type="date"
+            value={form.dateOfBirth}
+            onChange={updateField}
+            required
+            disabled={isVerifier}
+          />
         </label>
 
         <label>
@@ -101,12 +131,13 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
             onChange={updateField}
             rows="3"
             required
+            disabled={isVerifier}
           />
         </label>
 
         <label>
           <span>Document type</span>
-          <select name="documentType" value={form.documentType} onChange={updateField}>
+          <select name="documentType" value={form.documentType} onChange={updateField} disabled={isVerifier}>
             <option>Passport</option>
             <option>Driver License</option>
             <option>National ID</option>
@@ -116,15 +147,43 @@ export default function SubmitKYC({ wallet, onSubmitted }) {
 
         <label>
           <span>Document upload</span>
-          <input name="file" type="file" accept=".pdf,image/*" onChange={updateField} required />
+          <input
+            name="file"
+            type="file"
+            accept=".pdf,image/*"
+            onChange={updateField}
+            required
+            disabled={isVerifier}
+          />
         </label>
 
-        <button className="primary-button" type="submit" disabled={loading}>
+        <button className="primary-button" type="submit" disabled={loading || isVerifier}>
           {loading ? "Submitting..." : "Submit Application"}
         </button>
       </form>
 
       {message ? <div className="banner success">{message}</div> : null}
+      {txInfo ? (
+        <div className="proof-card">
+          <div>
+            <span>transaction</span>
+            <strong className="hash-wrap">{txInfo.hash}</strong>
+          </div>
+          <div>
+            <span>block</span>
+            <strong>{txInfo.blockNumber || "pending"}</strong>
+          </div>
+          <div>
+            <span>document cid</span>
+            <strong className="hash-wrap">{txInfo.cid}</strong>
+          </div>
+          {txInfo.explorerUrl ? (
+            <a className="proof-link" href={txInfo.explorerUrl} target="_blank" rel="noreferrer">
+              view on etherscan
+            </a>
+          ) : null}
+        </div>
+      ) : null}
       {error ? <div className="banner error">{error}</div> : null}
     </section>
   );

@@ -78,31 +78,82 @@ export async function submitKYC(payload) {
     payload.documentType,
     payload.ipfsCID
   );
-  await tx.wait();
+  const receipt = await tx.wait();
+  return {
+    hash: tx.hash,
+    blockNumber: Number(receipt?.blockNumber || 0)
+  };
 }
 
 export async function approveUser(address, reviewerNote) {
   const contract = await getContract(true);
   const tx = await contract.verifyUser(address, reviewerNote);
-  await tx.wait();
+  const receipt = await tx.wait();
+  return {
+    hash: tx.hash,
+    blockNumber: Number(receipt?.blockNumber || 0)
+  };
 }
 
 export async function rejectUser(address, reason, reviewerNote) {
   const contract = await getContract(true);
   const tx = await contract.rejectUser(address, reason, reviewerNote);
-  await tx.wait();
+  const receipt = await tx.wait();
+  return {
+    hash: tx.hash,
+    blockNumber: Number(receipt?.blockNumber || 0)
+  };
 }
 
 export async function addVerifier(address) {
   const contract = await getContract(true);
   const tx = await contract.addVerifier(address);
-  await tx.wait();
+  const receipt = await tx.wait();
+  return {
+    hash: tx.hash,
+    blockNumber: Number(receipt?.blockNumber || 0)
+  };
 }
 
 export async function removeVerifier(address) {
   const contract = await getContract(true);
   const tx = await contract.removeVerifier(address);
-  await tx.wait();
+  const receipt = await tx.wait();
+  return {
+    hash: tx.hash,
+    blockNumber: Number(receipt?.blockNumber || 0)
+  };
+}
+
+export function getContractInfo() {
+  return {
+    address: contractData.address || "",
+    network: contractData.network || ""
+  };
+}
+
+export function getExplorerTxUrl(hash) {
+  if (!hash) {
+    return "";
+  }
+
+  if (contractData.network === "sepolia") {
+    return `https://sepolia.etherscan.io/tx/${hash}`;
+  }
+
+  return "";
+}
+
+export function getExplorerAddressUrl(address) {
+  if (!address) {
+    return "";
+  }
+
+  if (contractData.network === "sepolia") {
+    return `https://sepolia.etherscan.io/address/${address}`;
+  }
+
+  return "";
 }
 
 export async function getDashboardStats() {
@@ -123,14 +174,26 @@ export async function getMyRecord() {
   return normalizeRecord(record);
 }
 
+export async function getMyRecordHistory() {
+  const contract = await getContract(true);
+  const records = await contract.getMyRecordHistory();
+  return records.map((record) => normalizeRecord(record));
+}
+
 export async function getVerifierRecord(address) {
-  const contract = await getContract(false);
+  const contract = await getContract(true);
   const record = await contract.getRecord(address);
   return normalizeRecord(record, address);
 }
 
+export async function getVerifierRecordHistory(address) {
+  const contract = await getContract(true);
+  const records = await contract.getRecordHistory(address);
+  return records.map((record) => normalizeRecord(record, address));
+}
+
 export async function fetchPendingApplications() {
-  const contract = await getContract(false);
+  const contract = await getContract(true);
   const addresses = await contract.getPendingApplicants();
   return Promise.all(addresses.map((address) => getVerifierRecord(address)));
 }

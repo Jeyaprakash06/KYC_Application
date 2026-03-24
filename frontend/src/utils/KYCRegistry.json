@@ -1,5 +1,5 @@
 {
-  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "address": "0x35Cd57e8862612D7343fa61EeA5850A265064c8C",
   "abi": [
     {
       "inputs": [
@@ -419,6 +419,91 @@
     },
     {
       "inputs": [],
+      "name": "getMyRecordHistory",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "fullName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "dateOfBirth",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "residentialAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "documentType",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsCID",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "rejectionReason",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "reviewerNote",
+              "type": "string"
+            },
+            {
+              "internalType": "uint64",
+              "name": "submittedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "reviewedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "statusHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum KYCRegistry.Status",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "reviewer",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct KYCRegistry.KYCRecord[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getPendingApplicants",
       "outputs": [
         {
@@ -516,6 +601,97 @@
           "internalType": "struct KYCRegistry.KYCRecord",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "getRecordHistory",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "fullName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "dateOfBirth",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "residentialAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "documentType",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsCID",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "rejectionReason",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "reviewerNote",
+              "type": "string"
+            },
+            {
+              "internalType": "uint64",
+              "name": "submittedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "reviewedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "statusHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum KYCRegistry.Status",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "reviewer",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct KYCRegistry.KYCRecord[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -871,5 +1047,5 @@
       "type": "function"
     }
   ],
-  "network": "localhost"
+  "network": "sepolia"
 }
